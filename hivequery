@@ -1,0 +1,74 @@
+1.create table if not exists cars (make String,fueltype String,numofdoors String,bodystyle String,drivewheels String,engineloccation String,wheelbase float,length float,width float,height float,curbweight int,enginesize int,horsepower int,peakrpm int,citympg int,highwaympg int,price int) comment 'cars' row format delimited fields terminated by '\t' lines terminated by '\n' stored as textfile;
+
+2.load data local inpath '/home/abhilash/Documents/files/CSV_files/cars.csv' overwrite into table cars;  #remove local when you have to give hdfs location.
+
+3.create external table cars(make String,fueltype String,numofdoors String,bodystyle String,drivewheels String,engineloccation String,wheelbase float,length float,width float,height float,curbweight int,enginesize int,horsepower int,peakrpm int,citympg int,highwaympg int,price int) comment 'cars' row format delimited fields terminated by '\t' lines terminated by '\n' location '/user/abhilash/files/'
+
+4.set hive.exec.dynamic.partition.mode=nonstrict;
+5.set hive.exec.dynamic.partition=true;
+6.from emp1 insert overwrite table emp partition(id)
+  select emp1.name,emp1.sal distribute by id;
+
+
+#...........................................................  For external table
+
+# created a directory in the hdfs 'SampleData' and load the text file into it.
+
+1.create external table SampleData(orderDate String,Region String,name String,Item String,Units float,UnitCost float,Total float) comment    'SampleData' row format delimited fields terminated by '\t' lines terminated by '\n' location '/Abhilash/SampleData';
+
+2. select orderdate,name,item from SampleData where region='Central';    # for filtering the data.
+3. select orderdate,name,item from SampleData where region='Central' order by item;  # applying order by in it.
+4. select count(*) from SampleData;  # no of records in the table.
+5. select name,count(*) from SampleData group by name;  # applying a group by and count simuntaneously
+
+
+#.............................................................for partitioning
+1. First create a 2 tables with same schema either of one is a partitioned table.
+   --create table emp1(name String,sal float) partitioned by(id int) row format delimited fields terminated by '\t' lines terminated by '\n' stored as textfile;
+   --load data local inpath '/home/abhilash/Documents/files/Sample' overwrite into table emp1;
+   --create table emp2(id int,name String,sal float) row format delimited fields terminated by '\t' lines terminated by '\n' stored as textfile;
+   --load data local inpath '/home/abhilash/Documents/files/Sample' overwrite into table emp2;
+   --set hive.exec.dynamic.partition.mode=nonstrict;
+   --set hive.exec.dynamic.partition=true;
+   --from usrdb.emp2 e1 insert overwrite table emp1 partition(id) select e1.name,e1.id,e1.sal distribute by id;
+
+
+#........................................................... for joins
+1.select employee.id,employee.name,employee.sal,emp_details.address,emp_details.acc_no from employee join emp_details on (emp_details.id = employee.id);
+
+
+#...................................................... for views
+1.create view emp_40000 as select employee.id,employee.name,employee.sal,emp_details.address,emp_details.acc_no from employee join emp_details on (emp_details.id = employee.id) where employee.sal > 40000;
+
+2.create view emp_30000 as select employee.id,employee.name,emp_details.address,emp_details.acc_no,employee.sal from employee join emp_details on (emp_details.id=employee.id) where employee.sal < 40000;
+
+#........................................................ for json file
+1. create table djson(name String, salary Float, subordinates Array<String>, deductions map<String,Float>, address Struct<street:String, city: String, state:String, zip:Int >) row format delimited fields terminated by '\n' lines terminated by '\n' stored as textfile;
+
+2.load data local inpath '/home/abhilash/Documents/data.json' overwrite into table djson ;
+
+#....................... for saving the processing table
+1. intial create a dummy table named emp.
+2. insert overwrite table emp select * from emp4 where id=1201;
+
+# for loading a data in the hive table as a parquet format
+1. create table pq1(id int, name String, sal float, email String) row format delimited fields terminated by '\t' lines terminated by '\n' stored as parquet;
+2. create a table emp2 as a textfile and load the data into the table emp2. Then only you can load the data into the parquet table
+3. insert overwrite table pq1 select * from emp2;
+
+# using multidelimiterserde for loading a movie lends data into hive table
+1. create table movies(MovieID int, title String, Genres String) row format serde 'org.apache.hadoop.hive.contrib.serde2.MultiDelimitSerDe' with serdeproperties("field.delim"="::") stored as textfile;
+2. load data local inpath '/home/abhilash/Documents/ml-1m/movies.dat' into table movies;
+
+# for applying a transformation on the serde table first add jar
+1 .add jar /home/abhilash/apache-hive-1.2.2-bin/lib/hive-contrib-1.2.2.jar;
+
+#changing the column name
+1. alter table mov_rat_5 change ratings max_5_rat int;
+
+# various transformation queries
+1. select movieid,count(*) as cnt from ratings group by movieid order by cnt desc limit 10;
+
+
+
+
